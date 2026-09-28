@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ForecastGuard AI – Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf0f3;--panel:#fff;--ink:#12212b;--mute:#5d6f7b;--line:#cdd8de;--ok:#1f7a8c;--watch:#d99100;--warn:#c8341f;--blue:#0b5cab}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a21;--panel:#172630;--ink:#e6eef2;--mute:#93a6b2;--line:#2a3d49;--ok:#4cb6c9;--watch:#f0b429;--warn:#ff6b52;--blue:#6fb1f2}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "IBM Plex Sans",system-ui,sans-serif;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+h1{font:600 30px/1.1 Fraunces,Georgia,serif;margin:0}
+h1 span{color:var(--blue)}
+h2{font-size:14px;font-weight:600;margin:0 0 10px}
+.sub{color:var(--mute);margin:4px 0 16px}
+.team{float:right;border:1.5px solid var(--blue);border-radius:99px;padding:4px 14px;font-size:13px;color:var(--blue)}
+.pipe{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-bottom:14px}
+.stage{flex:1 1 130px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:13px;transition:background .3s,color .3s}
+.stage.on{background:var(--ink);color:var(--bg)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:14px}
+.bar label{font-size:13px;color:var(--mute)}
+select,button{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:5px;padding:6px 10px;cursor:pointer}
+button.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+input[type=range]{width:150px;vertical-align:middle}
+.clock{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;min-width:0}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media(max-width:900px){.c4,.c5,.c7,.c8{grid-column:span 12}}
+.big{font:600 64px/1 Fraunces,Georgia,serif;font-variant-numeric:tabular-nums}
+.lvl{display:inline-block;padding:2px 10px;border-radius:99px;font-weight:600;font-size:13px;color:#fff;margin-left:8px;vertical-align:middle}
+.meter{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--ok),var(--watch) 55%,var(--warn));position:relative;margin:12px 0 4px}
+.meter i{position:absolute;top:-4px;width:4px;height:18px;background:var(--ink);border-radius:2px;transition:left .5s}
+.fac{display:grid;grid-template-columns:130px 1fr 38px;gap:8px;align-items:center;font-size:13px;margin:5px 0}
+.fac b{display:block;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.fac b i{display:block;height:100%;background:var(--blue);transition:width .5s}
+.fdf{display:grid;gap:3px;overflow-x:auto}
+.fdf .row{display:grid;grid-template-columns:78px repeat(12,minmax(16px,1fr));gap:3px;align-items:center;cursor:pointer}
+.fdf .row.sel .lab{font-weight:600;color:var(--blue)}
+.fdf .lab{font-size:12px;color:var(--mute);white-space:nowrap}
+.cell{height:22px;border-radius:3px}
+.dcdi{display:grid;grid-template-columns:78px 1fr 44px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.dcdi b{height:16px;background:var(--line);border-radius:3px;overflow:hidden;display:block}
+.dcdi b i{display:block;height:100%;transition:width .5s,background .5s}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px;font-size:13px;display:flex;gap:8px;align-items:center}
+.chip.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.dot{width:10px;height:10px;border-radius:50%}
+.log{max-height:230px;overflow:auto;font-size:13px}
+.log div{padding:6px 0;border-bottom:1px solid var(--line)}
+.log small{color:var(--mute);display:block}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);flex-wrap:wrap;margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px}
+.note{font-size:12px;color:var(--mute);margin-top:14px}
+svg text{fill:var(--mute);font-size:11px}
+</style>
+</head>
+<body>
+<div class="team">Creative_Sparkers · Smart India Hackathon 2026</div>
+<h1>Forecast<span>Guard</span> AI</h1>
+<p class="sub">24×7 Forecast Reliability Intelligence System – a reliability layer on top of IMD / GFS forecasts, not a replacement.</p>
+
+<div class="pipe" id="pipe"></div>
+
+<div class="bar">
+  <label>Station <select id="citySel"></select></label>
+  <label>Atmospheric stress <input type="range" id="stress" min="0" max="100" value="5" aria-label="Atmospheric stress"> <span id="stressV">5%</span></label>
+  <button id="sCalm">Calm</button><button id="sBuild">Building instability</button><button id="sBust">Cyclone bust</button>
+  <button class="pri" id="step">Advance 1 hour</button>
+  <button id="auto">Auto-run: off</button>
+  <span class="clock" id="clock"></span>
+</div>
+
+<div class="chips" id="chips"></div>
+
+<div class="grid">
+  <div class="card c4">
+    <h2>Bust Probability <span style="font-weight:400;color:var(--mute)">(strongest of next 5 days)</span></h2>
+    <div><span class="big" id="bp">0%</span><span class="lvl" id="lvl">STABLE</span></div>
+    <div class="meter"><i id="needle" style="left:0"></i></div>
+    <div id="why" style="font-size:13px;color:var(--mute)"></div>
+    <h2 style="margin-top:14px">What AFTE is seeing</h2>
+    <div id="factors"></div>
+  </div>
+  <div class="card c8">
+    <h2>Forecast Drift Fingerprint (FDF) <span style="font-weight:400;color:var(--mute)">– how much each target day's rainfall forecast moved at each hourly run</span></h2>
+    <div class="fdf" id="fdf"></div>
+    <div class="legend"><span>Calm</span><span id="ramp" style="display:flex;gap:2px"></span><span>Large revision (≥10 mm)</span><span>Click a row to inspect it below</span></div>
+  </div>
+  <div class="card c5">
+    <h2>Dynamic Confidence Drift Index (DCDI) – next 7 days</h2>
+    <div id="dcdi"></div>
+  </div>
+  <div class="card c7">
+    <h2 id="chartT">Forecast history</h2>
+    <div id="chart"></div>
+    <div class="legend"><span><i style="background:#e07b00"></i>IMD</span><span><i style="background:#7a4fd1"></i>GFS</span><span><i style="background:#2a9d5c"></i>ERA5</span><span><i style="background:var(--ink);height:4px"></i>Ensemble mean</span></div>
+  </div>
+  <div class="card c12">
+    <h2>24×7 Early alerts <span style="font-weight:400;color:var(--mute)">(dispatch is simulated in this prototype)</span></h2>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+<p class="note">Prototype note: weather data here is simulated so the demo runs offline. The AFTE score is a transparent weighted model over drift, model-disagreement, flip-flop, anomaly and observation signals — it stands in for the LSTM + XGBoost + anomaly-detection stack described in the proposal, which would be trained on archived IMD/GFS/ERA5 runs and plugged into the same interface.</p>
+
+<script>
+//CORE
+const CITIES={Chennai:{p:1008,w:14},Puducherry:{p:1008,w:12},Mumbai:{p:1005,w:16},Delhi:{p:1002,w:9},Kolkata:{p:1004,w:11},Guwahati:{p:1000,w:8}};
+const MODELS=['IMD','GFS','ERA5'];
+const FACT={drift:['Forecast drift',2.6],spread:['Model disagreement',2.2],flip:['Flip-flopping',1.8],anom:['Anomalous revision',1.0],pres:['Pressure fall',1.6],wind:['Wind surge',1.0]};
+const BIAS=-3.3;
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const mean=a=>a.reduce((x,y)=>x+y,0)/(a.length||1);
+const std=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))};
+const clamp=(x,lo=0,hi=1)=>Math.min(hi,Math.max(lo,x));
+const sig=x=>1/(1+Math.exp(-x));
+function makeCity(name,seed){
+  const r=rng(seed),g=()=>{let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+  const base=CITIES[name];
+  const st={name,g,base,stress:.05,truth:Array.from({length:7},()=>6+r()*10),m:null,hist:[],obs:{p:[base.p],w:[base.w]},level:0,alerts:[],t:new Date()};
+  st.t.setMinutes(0,0,0);
+  st.m=MODELS.map(()=>st.truth.slice());
+  for(let i=0;i<16;i++)tick(st,true);
+  return st;
+}
+function tick(st,silent){
+  const g=st.g,s=st.stress;
+  for(let d=0;d<7;d++){
+    const lead=d+1,sg=.6+4*s*(.5+lead/14);
+    st.truth[d]=Math.max(0,st.truth[d]+g()*sg*.4);
+    for(let k=0;k<3;k++){
+      const target=st.truth[d]+g()*(1+7*s*lead/7);
+      st.m[k][d]=Math.max(0,.5*st.m[k][d]+.5*target+g()*sg*.5);
+    }
+  }
+  const o=st.obs,L=o.p.length;
+  o.p.push(o.p[L-1]+(st.base.p-o.p[L-1])*.1*(1-s)-s*.9+g()*.25);
+  o.w.push(o.w[L-1]+(st.base.w+s*25-o.w[L-1])*.25+g());
+  if(o.p.length>30){o.p.shift();o.w.shift()}
+  st.hist.push({m:st.m.map(a=>a.slice()),em:st.m[0].map((_,d)=>mean(st.m.map(a=>a[d])))});
+  if(st.hist.length>26)st.hist.shift();
+  st.t=new Date(st.t.getTime()+36e5);
+  st.an=analyze(st);
+  if(!silent)alertLogic(st);
+}
+function analyze(st){
+  const H=st.hist,n=H.length,ps=st.obs.p,ws=st.obs.w,L=ps.length;
+  const pres=clamp((ps[Math.max(0,L-4)]-ps[L-1])/3.5),wind=clamp((ws[L-1]-st.base.w)/25);
+  const days=[];
+  for(let d=0;d<7;d++){
+    const em=H.map(h=>h.em[d]),df=[];
+    for(let i=1;i<n;i++)df.push(em[i]-em[i-1]);
+    const drift=mean(df.slice(-4).map(Math.abs));
+    const past=df.slice(0,-1).map(Math.abs),z=(Math.abs(df[df.length-1])-mean(past))/(std(past)||1);
+    const sg=df.slice(-6);let flips=0;
+    for(let i=1;i<sg.length;i++)if(sg[i]*sg[i-1]<0&&Math.abs(sg[i])>1.5&&Math.abs(sg[i-1])>1.5)flips++;
+    const f={drift:clamp(drift/4.5),spread:clamp(std(H[n-1].m.map(a=>a[d]))/5),flip:clamp(flips/3),anom:clamp(z/3),pres,wind};
+    let x=BIAS;for(const k in f)x+=FACT[k][1]*f[k];
+    days.push({f,p:sig(x),conf:100*(1-sig(x))*(1-.025*d)});
+  }
+  const top=days.slice(0,5).map((d,i)=>({d,i})).sort((a,b)=>b.d.p-a.d.p).slice(0,3);
+  const bust=mean(top.map(t=>t.d.p));
+  const fac={};for(const k in FACT)fac[k]=mean(top.map(t=>t.d.f[k]));
+  return{days,bust,fac,worst:top[0].i};
+}
+function alertLogic(st){
+  const p=st.an.bust,lv=p>=.75?2:p>=.5?1:(p<.35?0:st.level);
+  if(lv!==st.level){
+    const top=Object.keys(FACT).sort((a,b)=>st.an.fac[b]*FACT[b][1]-st.an.fac[a]*FACT[a][1])[0];
+    const txt=lv>st.level?(lv==2?'WARNING':'WATCH'):'STABLE';
+    st.alerts.unshift({t:new Date(st.t),lv,p,top:FACT[top][0],day:st.an.worst+1,txt});
+    st.level=lv;
+  }
+}
+//END
+const $=id=>document.getElementById(id);
+const S={};let cur='Puducherry',selDay=2,timer=null;
+const LC=['var(--ok)','var(--watch)','var(--warn)'],LN=['STABLE','WATCH','WARNING'];
+Object.keys(CITIES).forEach((c,i)=>{S[c]=makeCity(c,101+i*37)});
+$('citySel').innerHTML=Object.keys(CITIES).map(c=>`<option>${c}</option>`).join('');
+$('citySel').value=cur;
+const STAGES=['Live weather + forecast updates','AFTE analysis','Forecast drift detection','Bust probability','24×7 early alerts'];
+$('pipe').innerHTML=STAGES.map((s,i)=>`<div class="stage" id="st${i}">${i+1}. ${s}</div>`).join('');
+$('ramp').innerHTML=[0,.25,.5,.75,1].map(v=>`<i style="width:18px;height:10px;border-radius:2px;background:${heat(v*10)}"></i>`).join('');
+function heat(mm){const v=clamp(mm/10);const h=200-v*195,l=93-v*38;return `hsl(${h} ${25+v*60}% ${l}%)`}
+const fmtT=d=>d.toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+const fmtD=(d,k)=>{const x=new Date(d.getTime()+k*864e5);return x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+function pulse(){STAGES.forEach((_,i)=>{const e=$('st'+i);setTimeout(()=>e.classList.add('on'),i*160);setTimeout(()=>e.classList.remove('on'),i*160+320)})}
+function render(){
+  const st=S[cur],a=st.an,p=a.bust;
+  $('clock').textContent='Run time (simulated): '+fmtT(st.t);
+  $('stress').value=Math.round(st.stress*100);$('stressV').textContent=Math.round(st.stress*100)+'%';
+  $('chips').innerHTML=Object.keys(S).map(c=>{const q=S[c];return `<button class="chip ${c==cur?'sel':''}" data-c="${c}"><span class="dot" style="background:${LC[q.level]}"></span>${c} <b>${Math.round(q.an.bust*100)}%</b></button>`}).join('');
+  $('bp').textContent=Math.round(p*100)+'%';
+  $('lvl').textContent=LN[st.level];$('lvl').style.background=LC[st.level];
+  $('needle').style.left=`calc(${p*100}% - 2px)`;
+  const top=Object.keys(FACT).sort((x,y)=>a.fac[y]*FACT[y][1]-a.fac[x]*FACT[x][1])[0];
+  $('why').textContent=p<.35?'Successive forecast runs agree. No action needed.':`Forecast for ${fmtD(st.t,a.worst+1)} is least trustworthy. Main driver: ${FACT[top][0].toLowerCase()}.`;
+  $('factors').innerHTML=Object.keys(FACT).map(k=>`<div class="fac"><span>${FACT[k][0]}</span><b><i style="width:${a.fac[k]*100}%"></i></b><span>${Math.round(a.fac[k]*100)}</span></div>`).join('');
+  // FDF heatmap
+  const H=st.hist,n=H.length,cols=12;let h='';
+  for(let d=0;d<7;d++){
+    h+=`<div class="row ${d==selDay?'sel':''}" data-d="${d}"><span class="lab">${fmtD(st.t,d+1)}</span>`;
+    for(let i=n-cols;i<n;i++){const df=Math.abs(H[i].em[d]-H[i-1].em[d]);h+=`<span class="cell" title="Run ${fmtT(new Date(st.t.getTime()-(n-1-i)*36e5))}: revised by ${df.toFixed(1)} mm" style="background:${heat(df)}"></span>`}
+    h+='</div>';
+  }
+  $('fdf').innerHTML=h;
+  // DCDI
+  $('dcdi').innerHTML=a.days.map((d,i)=>{const c=Math.round(d.conf);const col=c>=70?'var(--ok)':c>=45?'var(--watch)':'var(--warn)';return `<div class="dcdi"><span>${fmtD(st.t,i+1)}</span><b><i style="width:${c}%;background:${col}"></i></b><span>${c}%</span></div>`}).join('');
+  // chart
+  const R=H.slice(-cols),W=560,Ht=200,pad=32,all=R.flatMap(r=>[...r.m.map(x=>x[selDay]),r.em[selDay]]),mx=Math.max(10,Math.ceil(Math.max(...all)/5)*5);
+  const X=i=>pad+i*(W-pad-8)/(R.length-1),Y=v=>Ht-22-(v/mx)*(Ht-34);
+  const line=(f,c,w)=>`<polyline fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" points="${R.map((r,i)=>X(i)+','+Y(f(r))).join(' ')}"/>`;
+  let svg=`<svg viewBox="0 0 ${W} ${Ht}" width="100%" role="img" aria-label="Forecast revisions for the selected day">`;
+  for(let v=0;v<=mx;v+=mx/4)svg+=`<line x1="${pad}" x2="${W-8}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="2" y="${Y(v)+4}">${Math.round(v)}mm</text>`;
+  svg+=line(r=>r.m[0][selDay],'#e07b00',1.5)+line(r=>r.m[1][selDay],'#7a4fd1',1.5)+line(r=>r.m[2][selDay],'#2a9d5c',1.5)+line(r=>r.em[selDay],'var(--ink)',3);
+  svg+=`<text x="${pad}" y="${Ht-4}">older runs</text><text x="${W-60}" y="${Ht-4}">latest run</text></svg>`;
+  $('chart').innerHTML=svg;
+  $('chartT').textContent=`Rainfall forecast for ${fmtD(st.t,selDay+1)} across the last ${cols} hourly runs`;
+  // alerts
+  $('log').innerHTML=st.alerts.length?st.alerts.map(x=>`<div><b style="color:${LC[x.lv]}">${x.txt}</b> · ${cur} · target ${fmtD(x.t,x.day)} · bust probability ${Math.round(x.p*100)}%<small>${fmtT(x.t)} — ${x.lv?`Driver: ${x.top}. Sent to IMD forecast desk and State disaster management (simulated).`:'Forecast runs have settled; alert cleared.'}</small></div>`).join(''):'<div>No alerts for this station yet. Raise the stress slider or press "Cyclone bust".</div>';
+}
+function advance(){Object.values(S).forEach(s=>{if(s.name!==cur)s.stress+=(Math.random()-.5)*.02;s.stress=clamp(s.stress,0,1);tick(s)});pulse();render()}
+$('step').onclick=advance;
+$('auto').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('auto').textContent='Auto-run: off'}else{timer=setInterval(advance,1300);$('auto').textContent='Auto-run: on';advance()}};
+$('citySel').onchange=e=>{cur=e.target.value;render()};
+$('chips').onclick=e=>{const b=e.target.closest('.chip');if(b){cur=b.dataset.c;$('citySel').value=cur;render()}};
+$('fdf').onclick=e=>{const r=e.target.closest('.row');if(r){selDay=+r.dataset.d;render()}};
+$('stress').oninput=e=>{S[cur].stress=e.target.value/100;$('stressV').textContent=e.target.value+'%'};
+const setS=v=>{S[cur].stress=v;render()};
+$('sCalm').onclick=()=>setS(.05);$('sBuild').onclick=()=>setS(.5);$('sBust').onclick=()=>setS(.95);
+render();
+</script>
+</body>
+</html>
